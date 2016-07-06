@@ -1,3 +1,5 @@
+#include <string>
+#include <fstream>
 
 #ifdef USING_WINDOWS
 	#include <SDL.h>
@@ -21,6 +23,8 @@ SDL_GLContext gGLCONTEXT = NULL;
 
 bool init();
 
+GLuint createShader( std::string filename, GLenum shaderType );
+
 void close();
 
 // ========== MAIN ==========
@@ -33,6 +37,11 @@ int main() {
 		return 0;
 	}
 	
+	
+	// ===== get shaders =====
+	GLuint vertexShader = createShader( "hello.vert", GL_VERTEX_SHADER );
+	
+	// ===== set loop flags =====
 	bool quit = false;
 	SDL_Event e;
 	
@@ -45,6 +54,38 @@ int main() {
 		}
 		
 		// ===== render =====
+		
+		// triangle, in transformed normalized coords (screen normal coords)
+		// will be transformed to screen-space coords w/viewport transform
+		// z-coords all 0 => 2D appearance
+		GLfloat vertices[] = {
+			-0.5f, -0.5f, 0.0f,
+			 0.5f, -0.5f, 0.0f,
+			 0.0f,  0.5f, 0.0f
+		};
+		
+		// create buffer ID storage
+		GLuint VBO;
+		// allocate storage on graphics card mem managed by vertex buffer obj
+		// f( numBuffersToGenerate, * to arr of GLuints to store buffer IDs )
+		glGenBuffers(1, &VBO);
+		
+		// Can be used to bind several buffers simultaneously if type is different
+		// binding 0 resets current bound buffer
+		// now any buffer calls on GL_ARRAY_BUFFER are used to configure currently
+		// bound buffer
+		// f( target buffer obj type, buffer ID )
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		
+		// copies user-defined vertex data into buffer's memory
+		// f( target buffer obj type, size (in bytes), arr of data, usage type )
+		// data arr can be null if no data should be copied
+		// usage type == how graphics card should manage data
+		// 		GL_STATIC_DRAW = data rarely/never changes
+		//		GL_DYNAMIC_DRAw = data changes often
+		//		GL_STREAM_DRAW = data changes each time it's drawn
+		// dynamic and stream allow for faster writing in memory
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 		
 		// == set state ==
 		// get rid of previous color
@@ -102,6 +143,39 @@ bool init() {
 	
 	return true;
 } // init
+
+GLuint createShader( std::string filename, GLenum shaderType ) {
+	// read in source of shader
+	std::ifstream shaderFile;
+	shaderFile.open( filename.c_str() );
+	
+	std::string tmp, shaderSource;
+	
+	while ( getline(shaderFile,tmp) ) {
+		shaderSource += tmp;
+	}
+	
+	shaderFile.close();
+	
+	const char *sfCStr = shaderSource.c_str();
+	
+	// create and compile shader
+	GLuint shaderID;
+	shaderID = glCreateShader(shaderType);
+	glShaderSource( shaderID, 1, &sfCStr, NULL );
+	glCompileShader( shaderID );
+	
+	// check errors
+	GLint success;
+	GLchar infoLog[512];
+	glGetShaderiv( shaderID, GL_COMPILE_STATUS, &success );
+	if ( !success ) {
+		glGetShaderInfoLog( shaderID, 512, NULL, infoLog );
+		printf( "ERROR: SHADER COMPILATION FAILED. ERROR: %s\n", infoLog );
+	}
+	
+	return shaderID;
+} // getShaders
 
 void close() {
 	SDL_GL_DeleteContext( gGLCONTEXT );
