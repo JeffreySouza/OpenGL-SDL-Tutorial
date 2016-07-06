@@ -37,14 +37,24 @@ int main() {
 	SDL_Event e;
 	
 	while ( !quit ) {
-		// handle events
+		// ===== handle events =====
 		while ( SDL_PollEvent( &e ) != 0 ) {
 			if ( e.type == SDL_QUIT ) {
 				quit = true;
 			}
 		}
 		
-		// render
+		// ===== render =====
+		
+		// == set state ==
+		// get rid of previous color
+		glClearColor( 0.2f, 0.3f, 0.3f, 1.0f );
+		
+		// == use state ==
+		// fill entire color buffer with color from glClearColor
+		glClear( GL_COLOR_BUFFER_BIT );
+		
+		// ===== swap buffers =====
 		SDL_GL_SwapWindow( gWINDOW );
 	}
 	
