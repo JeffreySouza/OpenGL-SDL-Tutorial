@@ -112,6 +112,8 @@ bool init() {
 		printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
 		return false;
 	}
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	
 	// init window
 	gWINDOW = SDL_CreateWindow( "OpenGL Tutorial", SDL_WINDOWPOS_CENTERED,
@@ -153,16 +155,18 @@ GLuint createShader( std::string filename, GLenum shaderType ) {
 	
 	while ( getline(shaderFile,tmp) ) {
 		shaderSource += tmp;
+		shaderSource += '\n';
 	}
 	
 	shaderFile.close();
 	
 	const char *sfCStr = shaderSource.c_str();
+	const int sfCStrLength = shaderSource.length();
 	
 	// create and compile shader
 	GLuint shaderID;
 	shaderID = glCreateShader(shaderType);
-	glShaderSource( shaderID, 1, &sfCStr, NULL );
+	glShaderSource( shaderID, 1, &sfCStr, &sfCStrLength );
 	glCompileShader( shaderID );
 	
 	// check errors
@@ -175,7 +179,7 @@ GLuint createShader( std::string filename, GLenum shaderType ) {
 	}
 	
 	return shaderID;
-} // getShaders
+} // createShader
 
 void close() {
 	SDL_GL_DeleteContext( gGLCONTEXT );
