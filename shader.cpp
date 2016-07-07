@@ -102,6 +102,13 @@ int main() {
 
 		glUseProgram( shaderProgram );
 
+		// Change color of uniform variable for shader
+		GLfloat timeValue = SDL_GetTicks() / 1000.f;
+		GLfloat greenValue = ( sin( timeValue ) / 2 ) + 0.5;
+		GLint vertexColorLocation = glGetUniformLocation( shaderProgram, "ourColor" );
+		glUniform4f( vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f );
+
+		// Draw triangle
 		glBindVertexArray( VAO );
 			glDrawArrays( GL_TRIANGLES, 0, 3 );	
 		glBindVertexArray( NULL );
