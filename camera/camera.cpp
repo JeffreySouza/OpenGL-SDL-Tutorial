@@ -51,7 +51,10 @@ int main() {
 	glm::vec3 cameraUp = glm::vec3( 0.0f, 1.0f, 0.0f );
 
 	glm::mat4 view;
-	GLfloat cameraSpeed = 0.05f;
+	GLfloat baseCameraSpeed = 0.005f;
+
+	// ===== create keypress =====
+	bool keys[1024];
 			
 	// ===== create textures =====
 	int width, height;
@@ -198,34 +201,48 @@ int main() {
 	bool quit = false;
 	SDL_Event e;
 
+	// deltaTime setup
+	GLfloat deltaTime, currentFrame;
+	GLfloat lastFrame = SDL_GetTicks();
+	
+	GLfloat cameraSpeed;
+
 	while ( !quit ) {
+		// calculate deltaTime
+		currentFrame = SDL_GetTicks();	
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+
 		// ===== handle events =====
 		while ( SDL_PollEvent( &e ) != 0 ) {
 			if ( e.type == SDL_QUIT ) {
 				quit = true;
-			} else if ( e.type == SDL_KEYDOWN ) {
-				// select surfaces based on key press
-				switch ( e.key.keysym.sym ) {
-
-					case SDLK_UP:
-						cameraPos += cameraSpeed * cameraFront;
-						break;
-					case SDLK_DOWN:
-						cameraPos -= cameraSpeed * cameraFront;
-						break;
-					case SDLK_LEFT:
-						cameraPos -= glm::normalize( glm::cross( cameraFront, cameraUp ) ) * cameraSpeed;
-						break;
-					case SDLK_RIGHT:
-						cameraPos += glm::normalize( glm::cross( cameraFront, cameraUp ) ) * cameraSpeed;
-						break;
-					default:
-						break;
-
-				}
 			}
 		}
-		
+
+		// strafe movement
+		int numKeys;
+		const Uint8* keystate = SDL_GetKeyboardState( &numKeys );
+
+		cameraSpeed = baseCameraSpeed * deltaTime;
+
+		if ( keystate[SDL_SCANCODE_UP] ) {
+			cameraPos += cameraSpeed * cameraFront;
+		}
+	
+		if ( keystate[SDL_SCANCODE_DOWN] ) {
+			cameraPos -= cameraSpeed * cameraFront;
+		}
+
+		if ( keystate[SDL_SCANCODE_LEFT] ) {
+			cameraPos -= glm::normalize( glm::cross( cameraFront, cameraUp ) ) * cameraSpeed;
+		}
+
+		if ( keystate[SDL_SCANCODE_RIGHT] ) {
+			cameraPos += glm::normalize( glm::cross( cameraFront, cameraUp ) ) * cameraSpeed;
+		}
+				
 		// ===== render =====
 	
 		// == set state ==
