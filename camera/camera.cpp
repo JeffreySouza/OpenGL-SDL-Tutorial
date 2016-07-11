@@ -53,9 +53,6 @@ int main() {
 	glm::mat4 view;
 	GLfloat baseCameraSpeed = 0.005f;
 
-	// ===== create keypress =====
-	bool keys[1024];
-			
 	// ===== create textures =====
 	int width, height;
 	unsigned char* boximage = SOIL_load_image( "img/container.jpg", &width, &height, 0, SOIL_LOAD_RGB );
@@ -201,6 +198,16 @@ int main() {
 	bool quit = false;
 	SDL_Event e;
 
+	// mouse movement setup
+	GLfloat yaw = -90;
+	GLfloat pitch = 0;
+
+	GLfloat mouseSensitivity = 0.39f;
+
+	int deltaMouseX, deltaMouseY;
+	int currMouseX, currMouseY, prevMouseX, prevMouseY;
+	SDL_GetMouseState( &prevMouseX, &prevMouseY );
+
 	// deltaTime setup
 	GLfloat deltaTime, currentFrame;
 	GLfloat lastFrame = SDL_GetTicks();
@@ -213,6 +220,19 @@ int main() {
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
+		// calculate deltaMouse
+		SDL_GetMouseState( &currMouseX, &currMouseY );
+
+		//printf( "X:%d Y:%d\n", currMouseX, currMouseY );
+
+		deltaMouseX = currMouseX - prevMouseX;
+		deltaMouseY = currMouseY - prevMouseY;
+		prevMouseX = currMouseX;
+		prevMouseY = currMouseY;
+
+		// apply mouse sensitivity
+		deltaMouseX *= mouseSensitivity;
+		deltaMouseY *= mouseSensitivity;
 
 		// ===== handle events =====
 		while ( SDL_PollEvent( &e ) != 0 ) {
@@ -221,7 +241,37 @@ int main() {
 			}
 		}
 
-		// strafe movement
+		// mouse movement
+		SDL_WarpMouseInWindow(gWINDOW, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2); 
+
+		yaw += deltaMouseX;
+		pitch -= deltaMouseY;
+
+		if ( pitch > 89.0f ) {
+			pitch = 89.0f;
+		}
+
+		if ( pitch < -89.0f ) {
+			pitch = -89.0f;
+		}
+
+		if ( yaw < 0 ) {
+			yaw = 360 + yaw;
+		}
+
+		if ( yaw > 360 ) {
+			yaw -= 360;
+		}
+
+		printf( "pitch:%f yaw:%f\n", pitch, yaw );
+
+		glm::vec3 front;
+		front.x = cos( glm::radians( pitch ) ) * cos( glm::radians( yaw ) );
+		front.y = sin( glm::radians( pitch ) );
+		front.z = cos( glm::radians( pitch ) ) * sin( glm::radians( yaw ) );
+		cameraFront = glm::normalize( front );
+
+		// keyboard movement
 		int numKeys;
 		const Uint8* keystate = SDL_GetKeyboardState( &numKeys );
 
@@ -355,7 +405,13 @@ bool init() {
 	// tell OpenGl the size of the window
 	// f( lower left x, lower left y, width, height )
 	glViewport( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT );
-	
+
+	int capMouse = SDL_SetRelativeMouseMode( (SDL_bool)true );
+
+	if ( capMouse < 0 ) {
+		printf( "Mouse could not be captured! SDL_Error: %s\n", SDL_GetError() );
+	}
+
 	return true;
 } // init
 
