@@ -32,6 +32,7 @@ bool init();
 
 GLuint createShader( std::string filename, GLenum shaderType );
 
+
 void close();
 
 // ========== MAIN ==========
@@ -46,18 +47,12 @@ int main() {
 
 	// ===== create camera =====
 	glm::vec3 cameraPos = glm::vec3( 0.0f, 0.0f, 3.0f );
-	glm::vec3 cameraTarget = glm::vec3( 0.0f, 0.0f, 0.0f );
-	glm::vec3 cameraDirection = glm::normalize( cameraPos - cameraTarget );
-
-	glm::vec3 up = glm::vec3( 0.0f, 1.0f, 0.0f );
-	glm::vec3 cameraRight = glm::normalize( glm::cross( up, cameraDirection ) );
-	glm::vec3 cameraUp = glm::cross( cameraDirection, cameraRight );
+	glm::vec3 cameraFront = glm::vec3( 0.0f, 0.0f, -1.0f );
+	glm::vec3 cameraUp = glm::vec3( 0.0f, 1.0f, 0.0f );
 
 	glm::mat4 view;
-	view = glm::lookAt( glm::vec3( 0.0f, 0.0f, 3.0f ),
-						glm::vec3( 0.0f, 0.0f, 0.0f ),
-						glm::vec3( 0.0f, 1.0f, 0.0f ) );
-
+	GLfloat cameraSpeed = 0.05f;
+			
 	// ===== create textures =====
 	int width, height;
 	unsigned char* boximage = SOIL_load_image( "img/container.jpg", &width, &height, 0, SOIL_LOAD_RGB );
@@ -208,6 +203,26 @@ int main() {
 		while ( SDL_PollEvent( &e ) != 0 ) {
 			if ( e.type == SDL_QUIT ) {
 				quit = true;
+			} else if ( e.type == SDL_KEYDOWN ) {
+				// select surfaces based on key press
+				switch ( e.key.keysym.sym ) {
+
+					case SDLK_UP:
+						cameraPos += cameraSpeed * cameraFront;
+						break;
+					case SDLK_DOWN:
+						cameraPos -= cameraSpeed * cameraFront;
+						break;
+					case SDLK_LEFT:
+						cameraPos -= glm::normalize( glm::cross( cameraFront, cameraUp ) ) * cameraSpeed;
+						break;
+					case SDLK_RIGHT:
+						cameraPos += glm::normalize( glm::cross( cameraFront, cameraUp ) ) * cameraSpeed;
+						break;
+					default:
+						break;
+
+				}
 			}
 		}
 		
@@ -223,10 +238,13 @@ int main() {
 		glUseProgram( shaderProgram );
 
 		// Move camera
+		/*
 		GLfloat radius = 8.0f;
 		GLfloat camX = sin( glm::radians( (GLfloat)SDL_GetTicks() / 20 ) ) * radius;
 		GLfloat camZ = cos( glm::radians( (GLfloat)SDL_GetTicks() / 20 ) ) * radius;
 		view = glm::lookAt( glm::vec3( camX, 0.0, camZ ), glm::vec3( 0.0, 0.0, 0.0 ), glm::vec3( 0.0, 1.0, 0.0 ) );
+		*/
+		view = glm::lookAt( cameraPos, cameraPos + cameraFront, cameraUp );
 
 		// == ROTATE ==
 		glm::mat4 trans;
